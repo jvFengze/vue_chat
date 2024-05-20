@@ -9,9 +9,9 @@
             <!-- <h2>Login</h2> -->
             <div class="login-form" v-if="loginStatue === true">
                 <div class="userNameText">账号</div>
-                <input type="text" name="username" placeholder="请输入账号">
+                <input type="text" v-model="formData.account" name="username" placeholder="请输入账号">
                 <div class="userNameText">密码</div>
-                <input type="password" name="password" placeholder="请输入密码">
+                <input type="password"  v-model="formData.password" name="password" placeholder="请输入密码">
                 <button id="button" type="submit" @click="login()">登录</button>
             </div>
             <div class="login-form" v-else>
@@ -28,13 +28,14 @@
 </template>
 
 <script setup>
-import router from '../../router/index.js'
+import router from '../../router/index.js';
+import axios from 'axios'
 import { ElMessage } from 'element-plus';
 import {ref,reactive,onMounted} from 'vue'
 let loginStatue = ref(true);
 let toLogin,toRegist;
 let formData = reactive({
-    name: '',
+    account: '',
     password: '',
 })
 onMounted(()=>{
@@ -56,10 +57,14 @@ function toRegistFun(){
 }
 function login(){
     ElMessage({
-        message: '我是张建',
+        message: '我是你爹',
         type: 'success',
     })
-    router.push('/main')
+    axios.post('http://123.57.74.65:8081/login', formData).then((res) => {
+        if(res.data.message === 'ok') {
+         router.push('/main')
+        }
+    })
     
 }
 </script>

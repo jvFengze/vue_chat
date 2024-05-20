@@ -124,14 +124,14 @@ const handleKeyCode = (event) => {
 }
 const send = () => {
     const params = {
-        account: 'yusen',
-        password: '123456'
+        // account: 'yusen',
+        // password: '123456'
     };
     // let xhr = new XMLHttpRequest();
     // xhr.open('post','http://123.57.74.65:8080/login',params);
     // xhr.send();
 
-    axios.post('http://123.57.74.65:8080/login')
+    axios.post('http://123.57.74.65:8081/login')
         .then(response => {
             console.log(response.data.msg);
             // console.log('1');
