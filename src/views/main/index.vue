@@ -5,9 +5,14 @@
                 <span>你好，于森~</span>
                 <div class="avatar"></div>
             </div>
+            <div class="tabChange">
+                <div :class="native === '0' ? 'native' : ''" @click="changeTabs(0)">好友列表</div>
+                <div :class="native === '1' ? 'native' : ''" @click="changeTabs(1)">群聊列表</div>
+            </div>
             <div class="frindList">
                 <userCard :class="selectedIndex == index ? 'active' : ''" v-for="(item, index) of userList" :key="item"
-                    :index=index :selectedIndex=selectedIndex @pointChart="toChart"></userCard>
+                    :index=index :selectedIndex=selectedIndex @pointChart="toChart" :username="item.nickname">
+                </userCard>
             </div>
             <div class="footer">
                 <div class="findFrind">
@@ -25,15 +30,15 @@
                 </div>
                 <div class="addBox" v-click-outside="handleClickOutside"
                     :class="visable == true ? 'box_transfrom' : ''">
-                    <input type="text" placeholder="输入账号">
-                    <div class="addFri">添加</div>
+                    <input type="text" placeholder="输入账号" v-model="account">
+                    <div class="addFri" @click="addFriFun">添加</div>
                 </div>
             </div>
         </div>
 
         <div class="rightBox">
             <div class="headerBox">
-                <span>张建</span>
+                <span>{{ chatName }}</span>
             </div>
             <div class="mainBox">
                 <div class="infoBox">
@@ -57,6 +62,7 @@ import infoContent from '../../components/infoContent.vue'
 import userCard from '../../components/userCard.vue'
 import axios from "axios";
 import { ElMessage } from 'element-plus';
+// import WebSocket from 'websocket';
 export default {
     components: {
         userCard,
@@ -67,9 +73,50 @@ export default {
 <script setup>
 import axios from 'axios'
 import { ref, reactive, onMounted, watch } from 'vue'
+const userInfo = sessionStorage.getItem('userInfo');
+const native = ref(sessionStorage.getItem('tabKey') || '0');
+
+function changeTabs(key) {
+    if (key === 0) {
+        sessionStorage.setItem('tabKey', '0')
+        native.value = '0';
+        getUserList()
+    } else if (key === 1) {
+        native.value = '1';
+        sessionStorage.setItem('tabKey', '1');
+        getUserList()
+    }
+}
+function chatSocket() {
+    const params = {
+        toid: 3,
+        id: JSON.parse(userInfo).id
+    }
+    const socket = new WebSocket(`ws://123.57.74.65:8081/user/chat?id=2`);
+
+    // 监听连接成功事件
+    socket.onopen = () => {
+        console.log('WebSocket connection established.');
+        socket.send('Hello, 张建!');
+
+    };
+
+    // 监听接收消息事件
+    socket.onmessage = (event) => {
+        console.log('Received message:', event.data);
+    };
+
+    // 监听连接关闭事件
+    socket.onclose = () => {
+        console.log('WebSocket connection closed.');
+    };
+
+    // 发送消息
+}
+chatSocket();
 let inputValue = ref('');
 let other = ref(true);
-let userList = [0, 1, 2, 3];
+let userList = ref([]);
 let myInfo = reactive([
     { msg: '你好', other: true }, { msg: '你也好', other: false }, { msg: '我是张建，你是谁', other: true }
 ])
@@ -78,7 +125,22 @@ let selectedIndex = ref(-1)
 let infoBox;
 let a = false;
 let addBox;
-let visable = ref(false)
+let visable = ref(false);
+async function getUserList() {
+    const params = {
+        id: JSON.parse(userInfo).id
+    }
+    if (native.value === '0') {
+        const result = await axios.post('http://123.57.74.65:8081/user/chat/getFriendList', params);
+        console.log(result)
+        userList.value = result.data.friends;
+    } else if (native.value === '1') {
+        const result = await axios.post('http://123.57.74.65:8081/user/chat/getGroupList', params);
+        console.log(result)
+        userList.value = result.data.groups;
+    }
+}
+getUserList();
 onMounted(() => {
     infoBox = document.querySelector('.infoBox');
     setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0);
@@ -153,8 +215,30 @@ const send = () => {
     newMsg.value = { msg: inputValue.value, other: false }
     setTimeout(() => { inputValue.value = '' }, 0)
 }
-const toChart = (index) => {
+const chatName = ref('');
+const toChart = (index, username) => {
     selectedIndex.value = index;
+    chatName.value = username
+}
+
+const account = ref('');
+
+async function addFriFun() {
+    try {
+        const params = {
+            friendId: Number(account.value),
+            id: JSON.parse(userInfo).id
+        }
+        const result = await axios.post('http://123.57.74.65:8081/user/chat/addfriend', params);
+        getUserList();
+        account.value = ''
+        ElMessage({
+            message: '添加成功！',
+            type: 'success'
+        })
+    } catch (error) {
+        console.log(error);
+    }
 }
 </script>
 
@@ -209,7 +293,7 @@ const toChart = (index) => {
 }
 
 .addBox {
-    border-top: 1.5px solid rgb(71, 75, 82); 
+    border-top: 1.5px solid rgb(71, 75, 82);
     position: absolute;
     height: 0px;
     min-width: 250px;
@@ -219,7 +303,8 @@ const toChart = (index) => {
     overflow: hidden;
     display: flex;
 }
-.addBox>input{
+
+.addBox>input {
     padding: 5px;
     /* position: absolute;
     top: 30px; */
@@ -236,9 +321,11 @@ const toChart = (index) => {
     outline: none;
     font-size: 16px;
 }
-.addBox>div{
-    margin-top: 25px;
+
+.addBox>div {
+    margin-top: 20px;
 }
+
 .box_transfrom {
     height: 60px;
 }
@@ -405,5 +492,35 @@ const toChart = (index) => {
     font-weight: 600;
     display: block;
     margin-top: 30px;
+}
+
+.addFri {
+    color: aliceblue;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.tabChange {
+    /* background: ; */
+    height: 50px;
+    color: #fff;
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+    border-bottom: 1px solid rgb(71, 75, 82);
+}
+
+.tabChange>div {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    cursor: pointer;
+    /* width: 50%; */
+    /* justify-content: center;
+    align-items: center; */
+}
+
+.native {
+    color: rgb(255, 213, 0);
 }
 </style>

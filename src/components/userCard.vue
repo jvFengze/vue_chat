@@ -2,7 +2,7 @@
   <div id="frindCard" class="container" @click="toChat()">
     <div class="avatar"></div>
     <div class="frindName">
-        张建
+        {{props.username}}
     </div>
   </div>
 </template>
@@ -16,7 +16,8 @@ let pointChat = ref(false);
 const props = defineProps({
   //子组件接收父组件传递过来的值
   index: Number,
-  selectedIndex: Number
+  selectedIndex: Number,
+  username: String
 })
 let frindCard;
 const emit = defineEmits(['pointChart'])
@@ -29,7 +30,7 @@ const selectedIndex = ref(-1)
 const toChat = () =>{
     selectedIndex.value = props.selectedIndex
     if(selectedIndex.value == index) return;
-    emit('pointChart',index)
+    emit('pointChart',index, props.username)
 }
 </script>
 

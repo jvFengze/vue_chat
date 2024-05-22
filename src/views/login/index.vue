@@ -11,8 +11,8 @@
                 <div class="userNameText">账号</div>
                 <input type="text" v-model="formData.account" name="username" placeholder="请输入账号">
                 <div class="userNameText">密码</div>
-                <input type="password"  v-model="formData.password" name="password" placeholder="请输入密码">
-                <button id="button" type="submit" @click="login()">登录</button>
+                <input type="password" v-model="formData.password" name="password" placeholder="请输入密码">
+                <button id="button" type="submit" @click="login">登录</button>
             </div>
             <div class="login-form" v-else>
                 <div class="userNameText">昵称</div>
@@ -31,41 +31,54 @@
 import router from '../../router/index.js';
 import axios from 'axios'
 import { ElMessage } from 'element-plus';
-import {ref,reactive,onMounted} from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 let loginStatue = ref(true);
-let toLogin,toRegist;
+let toLogin, toRegist;
 let formData = reactive({
     account: '',
     password: '',
 })
-onMounted(()=>{
+onMounted(() => {
     toLogin = document.getElementById('toLogin');
     toRegist = document.getElementById('toRegist');
 })
-function toLoginFun(){
-    if(loginStatue.value === true) return;
+function toLoginFun() {
+    if (loginStatue.value === true) return;
     loginStatue.value = true;
     toLogin.classList.add('textColor');
     toRegist.classList.remove('textColor');
 }
-function toRegistFun(){
-    if(loginStatue.value === false) return;
+function toRegistFun() {
+    if (loginStatue.value === false) return;
     loginStatue.value = false;
     toRegist.classList.add('textColor');
     toLogin.classList.remove('textColor');
     // console.log(loginStatue);
 }
-function login(){
-    ElMessage({
-        message: '我是你爹',
-        type: 'success',
-    })
-    axios.post('http://123.57.74.65:8081/login', formData).then((res) => {
-        if(res.data.message === 'ok') {
-         router.push('/main')
+async function login() {
+    try {
+        const result = await axios.post('http://123.57.74.65:8081/login', formData);
+        if (result.data.message === 'ok') {
+            ElMessage({
+                message: '登录成功',
+                type: 'success',
+            })
+            sessionStorage.setItem('userInfo', JSON.stringify(result.data))
+            router.push('/main')
+        } else {
+            ElMessage({
+                message: '账号或密码错误',
+                type: 'warning',
+            })
         }
-    })
-    
+    } catch (error) {
+        ElMessage({
+            message: '服务器出错',
+            type: 'error',
+        })
+        console.log(error);
+    }
+
 }
 </script>
 
@@ -112,10 +125,12 @@ function login(){
 .login-form {
     margin-top: 20px;
 }
-.regist-form{
+
+.regist-form {
     margin-top: 20px;
 }
-.regist-form>input{
+
+.regist-form>input {
     outline-color: #7acc35;
     width: 100%;
     padding: 10px;
@@ -125,7 +140,8 @@ function login(){
     box-sizing: border-box;
     height: 40px;
 }
-.regist-form>button{
+
+.regist-form>button {
     margin-top: 50px;
     width: 100%;
     padding: 10px;
@@ -136,6 +152,7 @@ function login(){
     border-radius: 12px;
     cursor: pointer;
 }
+
 .login-form>input {
     outline-color: #7acc35;
     width: 100%;
