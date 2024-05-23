@@ -4,6 +4,16 @@
             <div class="myself">
                 <span>你好，于森~</span>
                 <div class="avatar"></div>
+                <div class="hoverUserCenter">
+                    <div class="image"></div>
+                    <div>
+                        <span>你好，于森~</span>
+                    </div>
+                    <div class="pages">
+                        <div>帮助中心</div>
+                        <div @click="router.push('/personCenter')">个人中心</div>
+                    </div>
+                </div>
             </div>
             <div class="tabChange">
                 <div :class="native === '0' ? 'native' : ''" @click="changeTabs(0)">好友列表</div>
@@ -72,10 +82,11 @@ export default {
 </script>
 <script setup>
 import axios from 'axios'
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 const userInfo = sessionStorage.getItem('userInfo');
 const native = ref(sessionStorage.getItem('tabKey') || '0');
-
+const router = useRouter();
 function changeTabs(key) {
     if (key === 0) {
         sessionStorage.setItem('tabKey', '0')
@@ -131,13 +142,21 @@ async function getUserList() {
         id: JSON.parse(userInfo).id
     }
     if (native.value === '0') {
-        const result = await axios.post('http://123.57.74.65:8081/user/chat/getFriendList', params);
-        console.log(result)
-        userList.value = result.data.friends;
+        try {
+            const result = await axios.post('http://123.57.74.65:8081/user/chat/getFriendList', params);
+            console.log(result)
+            userList.value = result.data.friends;
+        } catch (error) {
+
+        }
     } else if (native.value === '1') {
-        const result = await axios.post('http://123.57.74.65:8081/user/chat/getGroupList', params);
-        console.log(result)
-        userList.value = result.data.groups;
+        try {
+            const result = await axios.post('http://123.57.74.65:8081/user/chat/getGroupList', params);
+            console.log(result)
+            userList.value = result.data.groups;
+        } catch (error) {
+
+        }
     }
 }
 getUserList();
@@ -145,6 +164,23 @@ onMounted(() => {
     infoBox = document.querySelector('.infoBox');
     setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0);
     addBox = document.querySelector('.addBox');
+    // document.querySelector('.avatar').onclick = (event) => {
+    //     event.preventDefault()
+    //     document.querySelector('.hoverUserCenter').style.opacity = '1';
+    //     document.querySelector('.hoverUserCenter').style.visibility = 'visible';
+    // }
+    document.onclick = (event) => {
+        // console.log(event.target.className);
+        // console.log(document.querySelector('.hoverUserCenter').contains(event.target));
+        const hoverUserCenter = document.querySelector('.hoverUserCenter');
+        if (event.target.className === 'avatar' || hoverUserCenter.contains(event.target)) {
+            hoverUserCenter.style.opacity = '1';
+            hoverUserCenter.style.visibility = 'visible';
+        } else {
+            hoverUserCenter.style.opacity = '0';
+            hoverUserCenter.style.visibility = 'hidden';
+        }
+    }
 })
 watch(newMsg, (newval, oldval) => {
     myInfo.push(newval.value);
@@ -522,5 +558,45 @@ async function addFriFun() {
 
 .native {
     color: rgb(255, 213, 0);
+}
+
+.avatar {
+    display: flex;
+}
+
+/* .avatar:hover + .hoverUserCenter {
+    visibility: visible;
+    opacity: 1;
+} */
+.hoverUserCenter {
+    transition: all .5s;
+    opacity: 0;
+    visibility: hidden;
+    background-color: #37383d;
+    position: absolute;
+    top: 65px;
+    min-width: 230px;
+    left: 10px;
+    border-radius: 10px;
+    /* min-height: 200px; */
+    z-index: 100;
+    padding: 30px 15px;
+    box-sizing: border-box;
+}
+
+.image {
+    height: 40px;
+    width: 40px;
+    background-color: rgb(93, 84, 73);
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.pages {
+    font-size: 16px;
+    margin-top: 10px;
+}
+.pages div {
+    cursor: pointer;
 }
 </style>
