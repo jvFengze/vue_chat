@@ -21,7 +21,7 @@
             </div>
             <div class="frindList">
                 <userCard :class="selectedIndex == index ? 'active' : ''" v-for="(item, index) of userList" :key="item"
-                    :index=index :selectedIndex=selectedIndex @pointChart="toChart" :username="item.nickname">
+                    :index=index :selectedIndex=selectedIndex @pointChart="toChart" :username="item.nickname" :toid="item.id">
                 </userCard>
             </div>
             <div class="footer">
@@ -87,7 +87,14 @@ import { useRouter } from 'vue-router';
 const userInfo = sessionStorage.getItem('userInfo');
 const native = ref(sessionStorage.getItem('tabKey') || '0');
 const router = useRouter();
+const chatName = ref(sessionStorage.getItem('chatName') || '');
+let selectedIndex = ref(Number(sessionStorage.getItem('selectedIndex')) > -1 ? Number(sessionStorage.getItem('selectedIndex')) : -1);
+
 function changeTabs(key) {
+    sessionStorage.removeItem('selectedIndex');
+    sessionStorage.removeItem('chatName');
+    chatName.value = '';
+    selectedIndex.value = -1;
     if (key === 0) {
         sessionStorage.setItem('tabKey', '0')
         native.value = '0';
@@ -98,18 +105,18 @@ function changeTabs(key) {
         getUserList()
     }
 }
-function chatSocket() {
-    const params = {
-        toid: 3,
-        id: JSON.parse(userInfo).id
-    }
-    const socket = new WebSocket(`ws://123.57.74.65:8081/user/chat?id=2`);
+function chatSocket(sendMsg) {
+    // const params = {
+    //     toid: sendId.value,
+    //     id: JSON.parse(userInfo).id,
+    //     message: '我是张海波'
+    // }
+    const socket = new WebSocket(`ws://123.57.74.65:8081/user/chat`);
 
     // 监听连接成功事件
     socket.onopen = () => {
         console.log('WebSocket connection established.');
-        socket.send('Hello, 张建!');
-
+        socket.send(JSON.stringify({id: JSON.parse(userInfo).id,toid: Number(sessionStorage.getItem('toid')),message: sendMsg}));
     };
 
     // 监听接收消息事件
@@ -124,15 +131,12 @@ function chatSocket() {
 
     // 发送消息
 }
-chatSocket();
+// chatSocket();
 let inputValue = ref('');
 let other = ref(true);
 let userList = ref([]);
-let myInfo = reactive([
-    { msg: '你好', other: true }, { msg: '你也好', other: false }, { msg: '我是张建，你是谁', other: true }
-])
+let myInfo = reactive([])
 let newMsg = reactive({})
-let selectedIndex = ref(-1)
 let infoBox;
 let a = false;
 let addBox;
@@ -161,6 +165,9 @@ async function getUserList() {
 }
 getUserList();
 onMounted(() => {
+    if(sessionStorage.getItem('chatName') && Number(sessionStorage.getItem('toid')) > -1) {
+        getChatMessage(sessionStorage.getItem('toid'));
+    }
     infoBox = document.querySelector('.infoBox');
     setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0);
     addBox = document.querySelector('.addBox');
@@ -248,15 +255,39 @@ const send = () => {
 
         return;
     }
-    newMsg.value = { msg: inputValue.value, other: false }
+    // newMsg.value = { msg: inputValue.value, other: false }
+    myInfo.push({ msg: inputValue.value, other: false });
+    setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
+    chatSocket(inputValue.value);
     setTimeout(() => { inputValue.value = '' }, 0)
 }
-const chatName = ref('');
-const toChart = (index, username) => {
-    selectedIndex.value = index;
-    chatName.value = username
-}
 
+const toChart = async (index, username, toid) => {
+    sessionStorage.setItem('toid', toid);
+    sessionStorage.setItem('selectedIndex', index);
+    sessionStorage.setItem('chatName', username)
+    selectedIndex.value = index;
+    chatName.value = username;
+    myInfo.length = 0;
+    getChatMessage(toid)
+}
+async function getChatMessage(toid) {
+    const data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
+    if(data.data.message === 'ok') {
+        data.data.messageList.forEach((item) => {
+            if(item.from_id == JSON.parse(userInfo).id) {
+                myInfo.push({ msg: item.message, other: false });
+    setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
+                // newMsg.value = { msg: item.message, other: false }
+            } else if(item.id == JSON.parse(userInfo).id) {
+                myInfo.push({ msg: item.message, other: false });
+    setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
+                // newMsg.value = { msg: item.message, other: true }
+            }
+        })
+    }
+    console.log(data);
+}
 const account = ref('');
 
 async function addFriFun() {

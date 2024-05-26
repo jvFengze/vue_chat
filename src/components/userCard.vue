@@ -17,7 +17,8 @@ const props = defineProps({
   //子组件接收父组件传递过来的值
   index: Number,
   selectedIndex: Number,
-  username: String
+  username: String,
+  toid: String
 })
 let frindCard;
 const emit = defineEmits(['pointChart'])
@@ -30,7 +31,7 @@ const selectedIndex = ref(-1)
 const toChat = () =>{
     selectedIndex.value = props.selectedIndex
     if(selectedIndex.value == index) return;
-    emit('pointChart',index, props.username)
+    emit('pointChart',index, props.username, props.toid)
 }
 </script>
 
