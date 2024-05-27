@@ -2,7 +2,7 @@
     <div class="container" style="width: 100vw;height: 100vh;display: flex;position: relative;">
         <div class="leftBox">
             <div class="myself">
-                <span>你好，于森~</span>
+                <span>你好，{{ JSON.parse(userInfo).nickname }}~</span>
                 <div class="avatar"></div>
                 <div class="hoverUserCenter">
                     <div class="image"></div>
@@ -236,14 +236,14 @@ const send = () => {
     // xhr.open('post','http://123.57.74.65:8080/login',params);
     // xhr.send();
 
-    axios.post('http://123.57.74.65:8081/login')
-        .then(response => {
-            console.log(response.data.msg);
-            // console.log('1');
-        })
-        .catch(error => {
-            console.error('请求失败:', error);
-        });
+    // axios.post('http://123.57.74.65:8081/login')
+    //     .then(response => {
+    //         console.log(response.data.msg);
+    //         // console.log('1');
+    //     })
+    //     .catch(error => {
+    //         console.error('请求失败:', error);
+    //     });
     //  const response = axios.post('http://123.57.74.65:8080/login', params)
     //  console.log(response);
     if (inputValue.value == '' || inputValue.value == '\n' || inputValue.value.replace(/\s+/g, ' ') == ' ') {
