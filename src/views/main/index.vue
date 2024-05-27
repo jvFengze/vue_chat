@@ -88,6 +88,8 @@ const userInfo = sessionStorage.getItem('userInfo');
 const native = ref(sessionStorage.getItem('tabKey') || '0');
 const router = useRouter();
 const chatName = ref(sessionStorage.getItem('chatName') || '');
+let myInfo = reactive([])
+
 let selectedIndex = ref(Number(sessionStorage.getItem('selectedIndex')) > -1 ? Number(sessionStorage.getItem('selectedIndex')) : -1);
 
 function changeTabs(key) {
@@ -111,7 +113,7 @@ function chatSocket(sendMsg) {
     //     id: JSON.parse(userInfo).id,
     //     message: '我是张海波'
     // }
-    const socket = new WebSocket(`ws://123.57.74.65:8081/user/chat`);
+    const socket = new WebSocket(`ws://123.57.74.65:8081/user/chat?id=${JSON.parse(userInfo).id}`);
 
     // 监听连接成功事件
     socket.onopen = () => {
@@ -122,6 +124,8 @@ function chatSocket(sendMsg) {
     // 监听接收消息事件
     socket.onmessage = (event) => {
         console.log('Received message:', event.data);
+        myInfo.push({ msg: event.data, other: true });
+        setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
     };
 
     // 监听连接关闭事件
@@ -135,7 +139,6 @@ function chatSocket(sendMsg) {
 let inputValue = ref('');
 let other = ref(true);
 let userList = ref([]);
-let myInfo = reactive([])
 let newMsg = reactive({})
 let infoBox;
 let a = false;
