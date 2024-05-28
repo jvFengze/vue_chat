@@ -59,6 +59,7 @@ const form = reactive({
 })
 const nickname = ref('');
 async function getUserData() {
+   try {
     const result = await axios.get(`http://123.57.74.65:8081/user/personal?id=${JSON.parse(userInfo).id}`);
     if (result.status === 200) {
         console.log(result)
@@ -68,6 +69,9 @@ async function getUserData() {
         form.location = JSON.parse(result.data.location);
         nickname.value = result.data.account;
     }
+   } catch (error) {
+        console.log(error);
+   }
 }
 getUserData()
 const ruleBoolean = ref(true);

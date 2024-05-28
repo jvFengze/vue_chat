@@ -21,7 +21,8 @@
             </div>
             <div class="frindList">
                 <userCard :class="selectedIndex == index ? 'active' : ''" v-for="(item, index) of userList" :key="item"
-                    :index=index :selectedIndex=selectedIndex @pointChart="toChart" :username="item.nickname" :toid="item.id">
+                    :index=index :selectedIndex=selectedIndex @pointChart="toChart" :username="item.nickname"
+                    :toid="item.id">
                 </userCard>
             </div>
             <div class="footer">
@@ -107,7 +108,8 @@ function changeTabs(key) {
         getUserList()
     }
 }
-function chatSocket(sendMsg) {
+let sendMsg = ref('');
+function chatSocket() {
     // const params = {
     //     toid: sendId.value,
     //     id: JSON.parse(userInfo).id,
@@ -117,8 +119,11 @@ function chatSocket(sendMsg) {
 
     // 监听连接成功事件
     socket.onopen = () => {
-        console.log('WebSocket connection established.');
-        socket.send(JSON.stringify({id: JSON.parse(userInfo).id,toid: Number(sessionStorage.getItem('toid')),message: sendMsg}));
+        ElMessage({
+            type: 'success',
+            message: '实时聊天已开启'
+        })
+        // socket.send(JSON.stringify({ id: JSON.parse(userInfo).id, toid: Number(sessionStorage.getItem('toid')), message: sendMsg.value }));
     };
 
     // 监听接收消息事件
@@ -135,7 +140,7 @@ function chatSocket(sendMsg) {
 
     // 发送消息
 }
-// chatSocket();
+chatSocket();
 let inputValue = ref('');
 let other = ref(true);
 let userList = ref([]);
@@ -168,7 +173,7 @@ async function getUserList() {
 }
 getUserList();
 onMounted(() => {
-    if(sessionStorage.getItem('chatName') && Number(sessionStorage.getItem('toid')) > -1) {
+    if (sessionStorage.getItem('chatName') && Number(sessionStorage.getItem('toid')) > -1) {
         getChatMessage(sessionStorage.getItem('toid'));
     }
     infoBox = document.querySelector('.infoBox');
@@ -183,13 +188,16 @@ onMounted(() => {
         // console.log(event.target.className);
         // console.log(document.querySelector('.hoverUserCenter').contains(event.target));
         const hoverUserCenter = document.querySelector('.hoverUserCenter');
-        if (event.target.className === 'avatar' || hoverUserCenter.contains(event.target)) {
-            hoverUserCenter.style.opacity = '1';
-            hoverUserCenter.style.visibility = 'visible';
-        } else {
-            hoverUserCenter.style.opacity = '0';
-            hoverUserCenter.style.visibility = 'hidden';
+        if (hoverUserCenter) {
+            if (event.target.className === 'avatar' || hoverUserCenter?.contains(event.target)) {
+                hoverUserCenter.style.opacity = '1';
+                hoverUserCenter.style.visibility = 'visible';
+            } else {
+                hoverUserCenter.style.opacity = '0';
+                hoverUserCenter.style.visibility = 'hidden';
+            }
         }
+
     }
 })
 watch(newMsg, (newval, oldval) => {
@@ -260,8 +268,9 @@ const send = () => {
     }
     // newMsg.value = { msg: inputValue.value, other: false }
     myInfo.push({ msg: inputValue.value, other: false });
-    setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
-    chatSocket(inputValue.value);
+    setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0);
+    sendMsg.value = inputValue.value;
+    // chatSocket(inputValue.value);
     setTimeout(() => { inputValue.value = '' }, 0)
 }
 
@@ -276,15 +285,15 @@ const toChart = async (index, username, toid) => {
 }
 async function getChatMessage(toid) {
     const data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
-    if(data.data.message === 'ok') {
+    if (data.data.message === 'ok') {
         data.data.messageList.forEach((item) => {
-            if(item.from_id == JSON.parse(userInfo).id) {
+            if (item.from_id == JSON.parse(userInfo).id) {
                 myInfo.push({ msg: item.message, other: false });
-    setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
+                setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
                 // newMsg.value = { msg: item.message, other: false }
-            } else if(item.id == JSON.parse(userInfo).id) {
+            } else if (item.id == JSON.parse(userInfo).id) {
                 myInfo.push({ msg: item.message, other: false });
-    setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
+                setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
                 // newMsg.value = { msg: item.message, other: true }
             }
         })
@@ -630,6 +639,7 @@ async function addFriFun() {
     font-size: 16px;
     margin-top: 10px;
 }
+
 .pages div {
     cursor: pointer;
 }
