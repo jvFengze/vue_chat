@@ -83,7 +83,7 @@ export default {
 </script>
 <script setup>
 import axios from 'axios'
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 const userInfo = sessionStorage.getItem('userInfo');
 const native = ref(sessionStorage.getItem('tabKey') || '0');
@@ -109,16 +109,10 @@ function changeTabs(key) {
     }
 }
 let sendMsg = ref('');
+const socket = ref(new WebSocket(`ws://123.57.74.65:8081/user/chat?id=${JSON.parse(userInfo).id}`));
 function chatSocket() {
-    // const params = {
-    //     toid: sendId.value,
-    //     id: JSON.parse(userInfo).id,
-    //     message: '我是张海波'
-    // }
-    const socket = new WebSocket(`ws://123.57.74.65:8081/user/chat?id=${JSON.parse(userInfo).id}`);
-
     // 监听连接成功事件
-    socket.onopen = () => {
+    socket.value.onopen = () => {
         ElMessage({
             type: 'success',
             message: '实时聊天已开启'
@@ -127,20 +121,25 @@ function chatSocket() {
     };
 
     // 监听接收消息事件
-    socket.onmessage = (event) => {
+    socket.value.onmessage = (event) => {
         console.log('Received message:', event.data);
         myInfo.push({ msg: event.data, other: true });
         setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
     };
 
     // 监听连接关闭事件
-    socket.onclose = () => {
-        console.log('WebSocket connection closed.');
-    };
+    
 
     // 发送消息
+
 }
 chatSocket();
+onUnmounted(() => {
+    socket.value.onclose = () => {
+        console.log('WebSocket connection closed.');
+        
+    };
+})
 let inputValue = ref('');
 let other = ref(true);
 let userList = ref([]);
@@ -154,16 +153,16 @@ async function getUserList() {
         id: JSON.parse(userInfo).id
     }
     if (native.value === '0') {
-        try {
-            const result = await axios.post('http://123.57.74.65:8081/user/chat/getFriendList', params);
+        try {               //`http://123.57.74.65:8081/user/chat/getFriendList?id=${userId}`
+            const result = await axios.get(`http://123.57.74.65:8081/user/chat/getFriendList?id=${JSON.parse(userInfo).id}`);
             console.log(result)
             userList.value = result.data.friends;
         } catch (error) {
-
+                                        //const data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
         }
     } else if (native.value === '1') {
         try {
-            const result = await axios.post('http://123.57.74.65:8081/user/chat/getGroupList', params);
+            const result = await axios.get(`http://123.57.74.65:8081/user/chat/getGroupList?id=${JSON.parse(userInfo).id}`);
             console.log(result)
             userList.value = result.data.groups;
         } catch (error) {
@@ -270,6 +269,9 @@ const send = () => {
     myInfo.push({ msg: inputValue.value, other: false });
     setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0);
     sendMsg.value = inputValue.value;
+    console.log(socket, 'socket');
+        socket.value.send(JSON.stringify({ id: JSON.parse(userInfo).id, toid: Number(sessionStorage.getItem('toid')), message: sendMsg.value }));
+
     // chatSocket(inputValue.value);
     setTimeout(() => { inputValue.value = '' }, 0)
 }
@@ -285,14 +287,16 @@ const toChart = async (index, username, toid) => {
 }
 async function getChatMessage(toid) {
     const data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
+    //console.log(data);
     if (data.data.message === 'ok') {
         data.data.messageList.forEach((item) => {
             if (item.from_id == JSON.parse(userInfo).id) {
                 myInfo.push({ msg: item.message, other: false });
                 setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
                 // newMsg.value = { msg: item.message, other: false }
-            } else if (item.id == JSON.parse(userInfo).id) {
-                myInfo.push({ msg: item.message, other: false });
+            } else {
+            //if (item.from_id == JSON.parse(userInfo).from_id) {
+                myInfo.push({ msg: item.message, other: true });
                 setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
                 // newMsg.value = { msg: item.message, other: true }
             }
