@@ -1,6 +1,12 @@
 <template>
     <div class="container">
-        <h2>欢迎来到张建的秘密花园</h2>
+        <div class="header-section">
+            <div class="videoContainer">
+                <video class="fullscreenVideo" id="bgVid" playsinline autoplay muted loop>
+                    <source src="../../assets/3.mp4" type="video/mp4">
+                </video>
+            </div>
+        </div>
         <div class="login-container">
             <div style="position: relative;margin-bottom: 35px;margin-top: 15px;">
                 <div id="toLogin" class="loginText textColor" @click="toLoginFun()">登录账号</div>
@@ -95,7 +101,23 @@ async function login() {
     width: 100vw;
     position: relative;
 }
+.header-section {
+        height: 100%;
+        color: #fff;
 
+        .videoContainer {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -100;
+
+            .fullscreenVideo {
+                width: 100%;
+                height: 100%;
+                object-fit: fill
+            }
+        }
+    }
 .container>h2 {
     width: 500px;
     position: absolute;

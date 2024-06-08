@@ -18,7 +18,8 @@ const props = defineProps({
   index: Number,
   selectedIndex: Number,
   username: String,
-  toid: String
+  toid: String,
+  userList: Array
 })
 let frindCard;
 const emit = defineEmits(['pointChart'])
@@ -31,7 +32,7 @@ const selectedIndex = ref(-1)
 const toChat = () =>{
     selectedIndex.value = props.selectedIndex
     if(selectedIndex.value == index) return;
-    emit('pointChart',index, props.username, props.toid)
+    emit('pointChart',index, props.username, props.toid, props.userList)
 }
 </script>
 

@@ -22,23 +22,26 @@
             <div class="frindList">
                 <userCard :class="selectedIndex == index ? 'active' : ''" v-for="(item, index) of userList" :key="item"
                     :index=index :selectedIndex=selectedIndex @pointChart="toChart" :username="item.nickname"
-                    :toid="item.id">
+                    :toid="item.id" :userList="item.userList">
                 </userCard>
             </div>
             <div class="footer">
                 <div class="findFrind">
+                    <div @click="addFrinds" v-if="native == 0">添加好友</div>
+                    <div @click="addFrinds" v-if="native == 1">添加群聊</div>
+                    <div @click="addChatDialog = true" v-if="native == 1">创建群聊</div>
                     <!-- <span class="input-group-text"></span> -->
 
-                    <input type="text" placeholder="搜索">
+                    <!-- <input type="text" placeholder="搜索"> -->
                 </div>
-                <div class="addFrind" @click="addFrinds">
+                <!-- <div class="addFrind" @click="addFrinds">
                     <svg t="1715313720100" class="icon" viewBox="0 0 1024 1024" version="1.1"
                         xmlns="http://www.w3.org/2000/svg" p-id="4654" width="30" height="30">
                         <path
                             d="M880.128 51.2h-736.256A92.7744 92.7744 0 0 0 51.2 143.872v736.3584a92.84608 92.84608 0 0 0 92.672 92.672h736.3584a92.84608 92.84608 0 0 0 92.672-92.672V143.872c-0.2048-51.2-41.5744-92.5696-92.7744-92.672zM727.9616 512.1024c0 19.8656-16.0768 36.0448-36.0448 36.0448H548.1472v143.7696c0 19.8656-16.0768 36.0448-36.0448 36.0448s-36.0448-16.0768-36.0448-36.0448V548.1472H332.3904c-19.8656 0-36.0448-16.0768-36.0448-36.0448 0-19.8656 16.0768-36.0448 36.0448-36.0448H476.16V332.3904c0-19.8656 16.0768-36.0448 36.0448-36.0448 19.8656 0 36.0448 16.0768 36.0448 36.0448V476.16h143.7696c19.7632 0 35.9424 16.0768 35.9424 35.9424z"
                             fill="#45484e" p-id="4655"></path>
                     </svg>
-                </div>
+                </div> -->
                 <div class="addBox" v-click-outside="handleClickOutside"
                     :class="visable == true ? 'box_transfrom' : ''">
                     <input type="text" placeholder="输入账号" v-model="account">
@@ -66,6 +69,24 @@
             </div>
         </div>
     </div>
+    <el-dialog v-model="addChatDialog" title="创建群聊" width="500">
+    <el-form :model="addChatForm">
+      <el-form-item label="群聊名称：" :label-width="formLabelWidth">
+        <el-input v-model="addChatForm.groupName" autocomplete="off" />
+      </el-form-item>
+      <el-form-item label="群聊简介：" :label-width="formLabelWidth">
+        <el-input v-model="addChatForm.groupDesc" autocomplete="off" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <!-- <el-button @click="dialogFormVisible = false">Cancel</el-button> -->
+        <el-button @click="addGroupChat">
+          确认添加
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script>
@@ -89,6 +110,35 @@ const userInfo = sessionStorage.getItem('userInfo');
 const native = ref(sessionStorage.getItem('tabKey') || '0');
 const router = useRouter();
 const chatName = ref(sessionStorage.getItem('chatName') || '');
+const addChatDialog = ref(false);
+const addChatForm = reactive({
+    groupName: '', // 群聊名称
+    groupDesc: '' // 群聊描述
+})
+
+async function addGroupChat() {
+    try {
+        const params = {
+            id: JSON.parse(userInfo).id,
+            ...addChatForm
+        }
+        const result = await axios.post(`http://123.57.74.65:8081/user/chat/createGroup`, params);
+        if(result.data.msg == "create success") {
+            ElMessage({
+                type: 'success',
+                message: '添加成功！'
+            })
+            getUserList();
+        }
+        console.log(result);
+    } catch (error) {
+        console.log(error);
+    }
+    addChatDialog.value = false;
+    addChatForm.groupName = '',
+    addChatForm.groupDesc = '';
+}
+
 let myInfo = reactive([])
 
 let selectedIndex = ref(Number(sessionStorage.getItem('selectedIndex')) > -1 ? Number(sessionStorage.getItem('selectedIndex')) : -1);
@@ -128,7 +178,7 @@ function chatSocket() {
     };
 
     // 监听连接关闭事件
-    
+
 
     // 发送消息
 
@@ -137,7 +187,7 @@ chatSocket();
 onUnmounted(() => {
     socket.value.onclose = () => {
         console.log('WebSocket connection closed.');
-        
+
     };
 })
 let inputValue = ref('');
@@ -158,12 +208,12 @@ async function getUserList() {
             console.log(result)
             userList.value = result.data.friends;
         } catch (error) {
-                                        //const data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
+            //const data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
         }
     } else if (native.value === '1') {
         try {
             const result = await axios.get(`http://123.57.74.65:8081/user/chat/getGroupList?id=${JSON.parse(userInfo).id}`);
-            console.log(result)
+            console.log(result, '123')
             userList.value = result.data.groups;
         } catch (error) {
 
@@ -270,23 +320,32 @@ const send = () => {
     setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0);
     sendMsg.value = inputValue.value;
     console.log(socket, 'socket');
+    if (sessionStorage.getItem('tabKey') == 0) {
         socket.value.send(JSON.stringify({ id: JSON.parse(userInfo).id, toid: Number(sessionStorage.getItem('toid')), message: sendMsg.value }));
+    } else {
+        socket.value.send(JSON.stringify({ id: JSON.parse(userInfo).id, groupid: Number(sessionStorage.getItem('toid')), message: sendMsg.value }));
+    }
 
     // chatSocket(inputValue.value);
     setTimeout(() => { inputValue.value = '' }, 0)
 }
 
-const toChart = async (index, username, toid) => {
+const toChart = async (index, username, toid,userList) => {
     sessionStorage.setItem('toid', toid);
     sessionStorage.setItem('selectedIndex', index);
-    sessionStorage.setItem('chatName', username)
     selectedIndex.value = index;
-    chatName.value = username;
+    chatName.value = `${username}（${userList.length}）`;
+    sessionStorage.setItem('chatName', chatName.value)
     myInfo.length = 0;
     getChatMessage(toid)
 }
 async function getChatMessage(toid) {
-    const data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
+    let data = null;
+    if (sessionStorage.getItem('tabKey') == 0) {
+        data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
+    } else {
+        data = await axios.get(`http://123.57.74.65:8081/user/chat/getGroupHistoryMessage?Id=${JSON.parse(userInfo).id}&groupId=${toid}`)
+    }
     //console.log(data);
     if (data.data.message === 'ok') {
         data.data.messageList.forEach((item) => {
@@ -295,7 +354,7 @@ async function getChatMessage(toid) {
                 setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
                 // newMsg.value = { msg: item.message, other: false }
             } else {
-            //if (item.from_id == JSON.parse(userInfo).from_id) {
+                //if (item.from_id == JSON.parse(userInfo).from_id) {
                 myInfo.push({ msg: item.message, other: true });
                 setTimeout(() => { infoBox.scrollTop = infoBox.scrollHeight; }, 0)
                 // newMsg.value = { msg: item.message, other: true }
@@ -308,7 +367,8 @@ const account = ref('');
 
 async function addFriFun() {
     try {
-        const params = {
+        if(native.value == 0) {
+            const params = {
             friendId: Number(account.value),
             id: JSON.parse(userInfo).id
         }
@@ -319,6 +379,20 @@ async function addFriFun() {
             message: '添加成功！',
             type: 'success'
         })
+        } else {
+            const params = {
+            groupId: Number(account.value),
+            id: JSON.parse(userInfo).id
+        }
+        const result = await axios.post('http://123.57.74.65:8081/user/chat/addgroup', params);
+        getUserList();
+        account.value = ''
+        ElMessage({
+            message: '添加成功！',
+            type: 'success'
+        })
+        }
+        
     } catch (error) {
         console.log(error);
     }
@@ -359,12 +433,21 @@ async function addFriFun() {
         display: flex;
 
         .findFrind {
-            width: 75%;
+            width: 100%;
             height: 100%;
-            position: relative;
+            /* position: relative; */
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            color: #fff;
             /* background-color: aliceblue */
         }
-
+        .findFrind div {
+            cursor: pointer;
+        }
+        .findFrind div:hover {
+            color: rgb(255, 213, 0);
+        }
         .addFrind {
             height: 100%;
             width: 25%;
@@ -647,4 +730,30 @@ async function addFriFun() {
 .pages div {
     cursor: pointer;
 }
+</style>
+<style>
+.el-dialog {
+    background: #37383d !important;
+}
+.el-dialog__title {
+    color: #fff !important;
+}
+.el-form-item__label {
+    color: #fff !important;
+}
+.el-dialog__close {
+    color: #fff !important;
+}
+.el-dialog__close svg:hover {
+    color: rgb(255, 213, 0);
+    /* animation: rote 2s; */
+}
+/* @keyframes rote {
+    50% {
+        transform: scale(10) rotate(360deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+} */
 </style>
