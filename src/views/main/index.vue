@@ -345,18 +345,22 @@ const toChart = async (index, username, toid,userList) => {
     sessionStorage.setItem('toid', toid);
     sessionStorage.setItem('selectedIndex', index);
     selectedIndex.value = index;
-    chatName.value = `${username}（${userList.length}）`;
+    if(sessionStorage.getItem('tabKey') == 0) {
+        chatName.value = username
+    } else {
+        chatName.value = `${username}（${userList.length}）`;
+    }
     sessionStorage.setItem('chatName', chatName.value)
     myInfo.length = 0;
     getChatMessage(toid)
 }
 async function getChatMessage(toid) {
     let data = null;
-    if (sessionStorage.getItem('tabKey') == 0) {
-        data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
-    } else {
-        // data = await axios.get(`http://123.57.74.65:8081/user/chat/getGroupHistoryMessage?Id=${JSON.parse(userInfo).id}&groupId=${toid}`)
-    }
+    data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
+    // if (sessionStorage.getItem('tabKey') == 0) {
+    // } else {
+    //     // data = await axios.get(`http://123.57.74.65:8081/user/chat/getGroupHistoryMessage?Id=${JSON.parse(userInfo).id}&groupId=${toid}`)
+    // }
     //console.log(data);
     if (data.data.message === 'ok') {
         data.data.messageList.forEach((item) => {
