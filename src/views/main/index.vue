@@ -345,10 +345,10 @@ const toChart = async (index, username, toid,userList) => {
     sessionStorage.setItem('toid', toid);
     sessionStorage.setItem('selectedIndex', index);
     selectedIndex.value = index;
-    if(sessionStorage.getItem('tabKey') == 0) {
-        chatName.value = username
-    } else {
+    if(sessionStorage.getItem('tabKey') == 1) {
         chatName.value = `${username}（${userList.length}）`;
+    } else {
+        chatName.value = username
     }
     sessionStorage.setItem('chatName', chatName.value)
     myInfo.length = 0;
