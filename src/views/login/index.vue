@@ -21,13 +21,13 @@
                 <button id="button" type="submit" @click="login">登录</button>
             </div>
             <div class="login-form" v-else>
-                <div class="userNameText">昵称</div>
-                <input type="text" name="username" placeholder="请输入昵称">
-                <!-- <div class="userNameText">账号</div>
-                <input type="text" name="username" placeholder="请输入账号"> -->
+                <!-- <div class="userNameText">昵称</div>
+                <input type="text" name="username" placeholder="请输入"> -->
+                <div class="userNameText">账号</div>
+                <input type="text" name="username" placeholder="请输入账号" v-model="registerForm.account">
                 <div class="userNameText">密码</div>
-                <input type="password" name="password" placeholder="请输入密码">
-                <button id="button" type="submit">注册</button>
+                <input type="password" name="password" placeholder="请输入密码" v-model="registerForm.password">
+                <button id="button" type="submit" @click="register">注册</button>
             </div>
         </div>
     </div>
@@ -41,6 +41,10 @@ import { ref, reactive, onMounted } from 'vue'
 let loginStatue = ref(true);
 let toLogin, toRegist;
 let formData = reactive({
+    account: '',
+    password: '',
+})
+let registerForm = reactive({
     account: '',
     password: '',
 })
@@ -85,6 +89,29 @@ async function login() {
         console.log(error);
     }
 
+}
+async function register() {
+    try {
+        const result = await axios.post('http://123.57.74.65:8081/register', registerForm);
+        if(result.data.message === 'ok') {
+            ElMessage({
+                type: 'success',
+                message: '注册成功！'
+            })
+            loginStatue.value = true;
+            registerForm.account = '';
+            registerForm.password = '';
+            toLogin.classList.add('textColor');
+             toRegist.classList.remove('textColor');
+        } else {
+            ElMessage({
+                type: 'warning',
+                message: '注册失败！'
+            })
+        }
+    } catch (error) {
+        console.log(error);
+    }
 }
 </script>
 

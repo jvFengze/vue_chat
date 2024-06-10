@@ -10,7 +10,7 @@
                         <span>你好，于森~</span>
                     </div>
                     <div class="pages">
-                        <div>帮助中心</div>
+                        <div @click="helpDialog = true">帮助中心</div>
                         <div @click="router.push('/personCenter')">个人中心</div>
                     </div>
                 </div>
@@ -87,6 +87,16 @@
       </div>
     </template>
   </el-dialog>
+  <el-dialog v-model="helpDialog" title="帮助中心" width="500">
+    <div style="color: white;">
+        欢迎来到网页聊天系统的帮助中心！这里为您提供了有关如何使用我们的网页聊天系统的详细指南和常见问题的解答。如果您在使用过程中遇到任何问题，不要犹豫，随时联系我们的客服团队。
+    </div>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="helpDialog = false">确定</el-button>
+      </div>
+    </template>
+    </el-dialog>
 </template>
 
 <script>
@@ -111,6 +121,7 @@ const native = ref(sessionStorage.getItem('tabKey') || '0');
 const router = useRouter();
 const chatName = ref(sessionStorage.getItem('chatName') || '');
 const addChatDialog = ref(false);
+const helpDialog = ref(false)
 const addChatForm = reactive({
     groupName: '', // 群聊名称
     groupDesc: '' // 群聊描述
@@ -344,7 +355,7 @@ async function getChatMessage(toid) {
     if (sessionStorage.getItem('tabKey') == 0) {
         data = await axios.get(`http://123.57.74.65:8081/user/chat/getHistoryMessage?Id=${JSON.parse(userInfo).id}&toId=${toid}`)
     } else {
-        data = await axios.get(`http://123.57.74.65:8081/user/chat/getGroupHistoryMessage?Id=${JSON.parse(userInfo).id}&groupId=${toid}`)
+        // data = await axios.get(`http://123.57.74.65:8081/user/chat/getGroupHistoryMessage?Id=${JSON.parse(userInfo).id}&groupId=${toid}`)
     }
     //console.log(data);
     if (data.data.message === 'ok') {
